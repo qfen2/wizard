@@ -1,0 +1,378 @@
+
+extentions_directories: []
+
+enterprise_id: tayg-test
+
+env_group: 49_tayg
+
+topic_prefix: 49_tayg
+
+is_prod: True
+
+aie_host: https://zjy-test.wiseyq.com/aieyes/api
+
+host: zjy-test.wiseyq.com
+
+zj_base_dir: /data/zhijian
+
+picture_dir: /data/zhijian/pictures
+
+export_dir: /data/zhijian/writable
+
+repo_name: zj_setting_svr
+
+# 临时目录，机器之间不共享
+tmp_dir: /data/zhijian/zj_tmp
+
+# 临时导出目录
+export_path: /data/zhijian/zj_tmp
+
+is_force_srv_find: True
+
+profiles: prod
+
+k8s:
+    gateway: 127.0.0.1
+    gateway_port:
+
+cdn:
+    app:
+        enable: true
+        domains:
+            - https://zjy-test.wiseyq.com
+            - http://zjy-test.wiseyq.com
+            - http://zjy-test.wiseyq.com
+    web:
+        enable: true
+        domain: https://zjy-test.wiseyq.com
+    default: https://zjy-test.wiseyq.com
+
+
+apilist_path: /apilist
+
+
+logging_config:
+    default: app
+    std_style: true
+    formatters:
+        default:
+            format: '[%(levelname)s|%(asctime)s|%(name)s:%(lineno)s|(%(funcName)s)|tid:-]%(message)s'
+        app:
+            format: '[%(levelname)s|%(asctime)s|%(name)s:%(lineno)s|(%(funcName)s)|tid:%(tracer_id)s]%(message)s'
+        app_full_tracer:
+            format: '[%(levelname)s|%(asctime)s|%(name)s:%(lineno)s|(%(funcName)s)|tid:%(tracer_id)s|sid:%(span_id)s|span_parent_id:%(span_parent_id)s|span_operation_name:%(span_operation_name)s]%(message)s'
+        color:
+            format:
+                - '[%(levelname)s|%(asctime)s|%(name)s:%(lineno)s|(%(funcName)s)|tid:%(tracer_id)s]'
+                - '%(message)s'
+    filters:
+        peewee:
+            (): zjutils.filter_logging.PeeweeFilter
+    handlers:
+        peewee_handler:
+            level: DEBUG
+            formatter: app
+            stream: ext://sys.stdout
+        app_debug_handler:
+            level: DEBUG
+            formatter: app
+            stream: ext://sys.stdout
+        app_info_handler:
+            level: INFO
+            formatter: app
+            stream: ext://sys.stdout
+        app_error_handler:
+            level: ERROR
+            formatter: app
+            stream: ext://sys.stderr
+        debug_handler:
+            level: DEBUG
+            formatter: default
+            stream: ext://sys.stdout
+        info_handler:
+            level: INFO
+            formatter: default
+            stream: ext://sys.stdout
+        error_handler:
+            level: ERROR
+            formatter: default
+            stream: ext://sys.stderr
+        debug_color_handler:
+            level: DEBUG
+            formatter: color
+            stream: ext://sys.stdout
+        info_color_handler:
+            level: INFO
+            formatter: color
+            stream: ext://sys.stdout
+        error_color_handler:
+            level: ERROR
+            formatter: color
+            stream: ext://sys.stderr
+        app_debug_file_handler:
+            level: DEBUG
+            formatter: app
+            class: mrfh.MultiprocessRotatingFileHandler
+            filename: /data/log/python/tayg-test.zj_setting_svr.log
+            backupCount: 50
+            maxBytes: 104857600
+        app_info_file_handler:
+            filters: [peewee]
+            level: INFO
+            formatter: app
+            class: mrfh.MultiprocessRotatingFileHandler
+            filename: /data/log/python/tayg-test.zj_setting_svr.log
+            backupCount: 50
+            maxBytes: 104857600
+        app_error_file_handler:
+            level: ERROR
+            formatter: app
+            class: mrfh.MultiprocessRotatingFileHandler
+            filename: /data/log/python/tayg-test.zj_setting_svr.log
+            backupCount: 50
+            maxBytes: 104857600
+        debug_file_handler:
+            level: DEBUG
+            formatter: default
+            class: mrfh.MultiprocessRotatingFileHandler
+            filename: /data/log/python/tayg-test.zj_setting_svr.log
+            backupCount: 50
+            maxBytes: 104857600
+        info_file_handler:
+            level: INFO
+            formatter: default
+            class: mrfh.MultiprocessRotatingFileHandler
+            filename: /data/log/python/tayg-test.zj_setting_svr.log
+            backupCount: 50
+            maxBytes: 104857600
+        error_file_handler:
+            level: ERROR
+            formatter: default
+            class: mrfh.MultiprocessRotatingFileHandler
+            filename: /data/log/python/tayg-test.zj_setting_svr.log
+            backupCount: 50
+            maxBytes: 104857600
+
+    loggers:
+        app:
+            level: DEBUG
+            handlers: [app_debug_file_handler]
+        opentracing:
+            level: DEBUG
+            handlers: [debug_file_handler]
+        zjutils:
+            level: DEBUG
+            handlers: [debug_file_handler]
+        zjpkg_rpc:
+            level: DEBUG
+            handlers: [app_debug_file_handler]
+        mixian:
+            level: ERROR
+            handlers: [error_file_handler]
+        flask_redis_cookie:
+            level: INFO
+            handlers: [info_file_handler]
+        werkzeug:
+            level: DEBUG
+            handlers: [debug_file_handler]
+        peewee:
+            level: DEBUG
+            handlers: [app_debug_file_handler]
+        zhijian:
+            level: DEBUG
+            handlers: [app_debug_file_handler]
+        celery_app:
+            level: DEBUG
+            handlers: [app_debug_file_handler]
+        celery:
+            level: DEBUG
+            handlers: [debug_file_handler]
+        celery.task:
+            level: DEBUG
+            handlers: [debug_file_handler]
+        celery.worker:
+            level: DEBUG
+            handlers: [debug_file_handler]
+        app.celery_tasks:
+            level: DEBUG
+            handlers: [debug_file_handler]
+        zhijian.apps.celery_app:
+            level: DEBUG
+            handlers: [debug_file_handler]
+        gunicorn:
+            level: INFO
+            handlers: [info_file_handler]
+        urllib3:
+            level: DEBUG
+            handlers: [debug_file_handler]
+        jaeger_tracing:
+            level: DEBUG
+            handlers: [debug_file_handler]
+        null:
+            level: DEBUG
+            handlers: [debug_file_handler]
+    root:
+        level: DEBUG
+        handlers: [debug_file_handler]
+    null:
+        level: DEBUG
+        handlers: [debug_file_handler]
+
+
+session:
+    name: 'zjsess'  # 客户端cookie名
+    key_pairs: 'helloworld'  # cookie校验密钥
+    prefix: 'session_'  # redis保存前缀
+    tmp_age: 3600  # 默认cookie保存时间
+    max_age: 604800 # 3600 * 24 * 7  # 默认cookie最大保存时间
+    redis:
+        host: 192.168.91.118
+        port: 6379
+        db: 0
+        password: G3vBiTDy3aY=
+
+redis:
+    host: 192.168.91.118
+    port: 6379
+    db: 0
+    password: G3vBiTDy3aY=
+
+inner_api:
+    ucenter:
+        url_prefix: http://192.168.91.118:29907/uc
+
+srv_center:
+  - type: consul
+    params:
+      host: '192.168.91.120'
+      port: 8500
+      scheme: 'http'
+      name_prefix: tayg-test-
+
+
+srv_center_consul:
+    check:
+        tcp:
+            interval: 5s
+            timeout: 30s
+            deregister: 30s
+
+
+tracer:
+  config:
+      enabled: True
+      sampler:
+          type: const
+          param: 1
+      local_agent:
+          reporting_host: 10.13.24.201
+      logging: True
+      tags:
+          enterprise_id: tayg-test
+  validate: True
+
+# 默认开发用配置
+
+databases:
+    zj3:
+        engine: mysql
+        database: zhijian2
+        params:
+            host: 192.168.91.119
+            port: 3306
+            user: zhijian
+            password: JM4tLp9u6pPANLhT
+    zj3user:
+        engine: mysql
+        database: zhijian2_apisvr
+        params:
+            host: 192.168.91.119
+            port: 3306
+            user: zhijian
+            password: JM4tLp9u6pPANLhT
+    stat:
+        engine: mysql
+        database: zhijian2_stat
+        params:
+            host: 192.168.91.119
+            port: 3306
+            user: zhijian
+            password: JM4tLp9u6pPANLhT
+    zj3setting:
+        engine: mysql
+        database: zhijian2_setting
+        params:
+            host: 192.168.91.119
+            port: 3306
+            user: zhijian
+            password: JM4tLp9u6pPANLhT
+    zj3element:
+        engine: mysql
+        database: zhijian2_bim
+        params:
+            host: 192.168.91.119
+            port: 3306
+            user: zhijian
+            password: JM4tLp9u6pPANLhT
+    zj3bim:
+        engine: mysql
+        database: ue4model
+        params:
+            host: 192.168.91.101
+            port: 3306
+            user: root
+            password: E2c#ZdR$
+    zj3notify:
+        engine: mysql
+        database: zhijian2_notify
+        params:
+            host: 192.168.91.119
+            port: 3306
+            user: zhijian
+            password: JM4tLp9u6pPANLhT
+
+svr_config:
+    host: 0.0.0.0
+    port: 29918
+    debug: True
+
+connagent:
+    agent_addr: 127.0.0.1:40000
+    srv_domain: .connagent.zhijiancloud.net
+
+houseqm_repossession_template:
+    team_group_100337:
+        template_uuid: DC207635436247D88E4D4440891FCD27
+    team_group_103722:
+        template_uuid: DC207635436247D88E4D4440891FCD27
+
+enable_boot_page_ad: 1
+
+rpc_servers:
+    control:
+        url_prefix: http://192.168.91.118:29978/control
+        type: http
+    open:
+        url_prefix: http://192.168.91.118:29932/core_srv_open
+        type: http
+
+    core_srv_check_item:
+        url_prefix: http://192.168.91.118:29924/core_srv_check_item
+
+image_upload:
+    path: '/data/zhijian'
+    store_key_prefix: 'pictures'
+    allow_extensions:
+        - jpg
+
+llm:
+  deepseek:
+    api_key: sk-349d0ffd18834319a4a0669977196596
+  tavily:
+    api_key: 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
+  openai:
+    apikey:
+  modelscope:
+    model_name: ZhipuAI/GLM-4.7
+    api_key: ms-03a4d8f0-8e30-46ff-a49c-6dde654bfbbd
+    base_url: https://api-inference.modelscope.cn/v1

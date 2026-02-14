@@ -1,0 +1,5 @@
+Department,Budgeted,Actual,Variance,Status
+Marketing,500000,420000,80000,Under Budget
+R&D,1200000,1250000,-50000,Over Budget
+Admin,200000,180000,20000,Under Budget
+Sales,300000,290000,10000,Under Budget

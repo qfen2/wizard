@@ -14,6 +14,7 @@ def calculate_tip(bill_amount: float, tip_percentage: float = 20.0) -> str:
     tip = bill_amount * (tip_percentage / 100)
     return f"Tip: ${tip:.2f}, Total: ${bill_amount + tip:.2f}"
 
+
 class DynamicToolMiddleware(AgentMiddleware):
     """Middleware that registers and handles dynamic tools."""
 
@@ -26,7 +27,7 @@ class DynamicToolMiddleware(AgentMiddleware):
     def wrap_tool_call(self, request: ToolCallRequest, handler):
         # Handle execution of the dynamic tool
         if request.tool_call["name"] == "calculate_tip":
-            return handler(request.override(tool=calculate_tip)) # type: ignore
+            return handler(request.override(tool=calculate_tip))  # type: ignore
         return handler(request)
 
 
@@ -34,10 +35,11 @@ class DynamicToolMiddleware(AgentMiddleware):
 class CustomState(AgentState):
     user_preferences: dict
 
+
 class CustomMiddleware(AgentMiddleware):
     state_schema = CustomState
-    # tools = [tool1, tool2]
 
+    # tools = [tool1, tool2]
 
     def before_model(self, state: CustomState, runtime) -> dict[str, Any] | None:
         '''

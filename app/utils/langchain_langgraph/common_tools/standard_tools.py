@@ -1,3 +1,6 @@
+import csv
+from pathlib import Path
+
 from langchain_core.tools import tool
 import os
 from dataclasses import dataclass
@@ -148,3 +151,60 @@ def delete_database(db_name: str):
     """删除指定的数据库。"""
     print(f"\n--- ⚠️ 数据库 {db_name} 已删除！ ---")
     return "数据库删除成功。"
+
+
+# 配置文件存放的根目录（防止路径穿越攻击，只允许读取该目录下的文件）
+SAFE_BASE_DIR = os.path.abspath("./user_uploads")
+from pypdf import PdfReader
+
+@tool
+def read_file_content(file_name: str, runtime: ToolRuntime) -> str:
+    """
+    直接从本地存储中读取指定文件的详细内容。
+    支持的格式包括：.csv (表格数据), .pdf (文档), .txt/.md (文本)。
+
+    参数:
+    - file_name: 文件名（必须包含后缀，如 'budget.csv'，'manual.txt'）
+    """
+    # 1. 构建安全路径，防止恶意用户读取系统文件
+    file_path = os.path.abspath(os.path.join(SAFE_BASE_DIR, file_name))
+    if not file_path.startswith(SAFE_BASE_DIR):
+        return f"错误：权限拒绝。无法访问目录外的文件。"
+
+    if not os.path.exists(file_path):
+        return f"错误：文件 '{file_name}' 不存在。请检查文件名是否正确。"
+
+    # 2. 根据后缀名采取不同的读取策略
+    suffix = Path(file_path).suffix.lower()
+
+    try:
+        # --- 处理 CSV 文件 ---
+        if suffix == ".csv":
+            content = []
+            with open(file_path, mode='r', encoding='utf-8-sig') as f:
+                reader = csv.reader(f)
+                for row in reader:
+                    content.append(",".join(row))
+            return f"--- CSV 文件 {file_name} 的内容 ---\n" + "\n".join(content)
+
+        # --- 处理 PDF 文件 ---
+        elif suffix == ".pdf":
+            reader = PdfReader(file_path)
+            text = ""
+            for i, page in enumerate(reader.pages):
+                page_text = page.extract_text()
+                if page_text:
+                    text += f"\n[第 {i + 1} 页]\n{page_text}"
+            return f"--- PDF 文件 {file_name} 的解析内容 ---\n{text}"
+
+        # --- 处理 纯文本 文件 (txt, md, json) ---
+        elif suffix in [".txt", ".md", ".json", ".log"]:
+            with open(file_path, mode='r', encoding='utf-8') as f:
+                text = f.read()
+            return f"--- 文本文件 {file_name} 的内容 ---\n{text}"
+
+        else:
+            return f"错误：目前不支持读取 {suffix} 格式的文件。"
+
+    except Exception as e:
+        return f"读取文件 '{file_name}' 时发生错误: {str(e)}"

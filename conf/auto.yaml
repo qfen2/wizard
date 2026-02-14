@@ -373,6 +373,9 @@ llm:
   openai:
     apikey:
   modelscope:
-    model_name: ZhipuAI/GLM-4.7
-    api_key: ms-03a4d8f0-8e30-46ff-a49c-6dde654bfbbd
+    model_name: Qwen/Qwen3-Coder-480B-A35B-Instruct
+#    model_name: Qwen/Qwen3-Coder-Next
+    api_key: ms-a3b5d6b6-6326-4f28-ae9e-93599201bca4
+#    api_key: ms-03a4d8f0-8e30-46ff-a49c-6dde654bfbbd
     base_url: https://api-inference.modelscope.cn/v1
+#    embedding_model_name: Qwen/Qwen3-Embedding-8B

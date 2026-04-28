@@ -13,14 +13,17 @@ from langchain.agents.middleware import wrap_model_call, ModelRequest, ModelResp
 from langchain.agents.structured_output import ToolStrategy, ProviderStrategy
 from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.prebuilt import ToolRuntime
 from langgraph.types import Command
+from langgraph_sdk.schema import Context
 from pydantic import BaseModel
 
 import config
 from app.utils.langchain_langgraph.common_tools.dynamic_tools import CustomMiddleware
+from app.utils.langchain_langgraph.common_tools.middleware_builder import ContentFilterMiddleware
 from app.utils.langchain_langgraph.common_tools.model_selector import create_dynamic_selector
 from app.utils.langchain_langgraph.common_tools.standard_tools import get_account_info, UserContext, send_email, search, \
-    delete_database
+    delete_database, read_file_content
 from app.utils.langchain_langgraph.errors.handle_error import handle_tool_errors
 
 
@@ -87,17 +90,16 @@ def create_account_agent():
     # """
 
     SYSTEM_PROMPT = '''You are an AI assistant. 
-     - send_email : 发送邮件
     '''
 
     # 创建 Agent
     agent = create_agent(
         model=basic_llm,
-        tools=[send_email, search, delete_database],
+        tools=[send_email, read_file_content],
         context_schema=UserContext,  # type: ignore
         system_prompt=SYSTEM_PROMPT,
         checkpointer=InMemorySaver(),
-        response_format=ToolStrategy(ContactInfo),  # 结构化输出，如果结果无法支持其格式化，则没有structured_response
+        # response_format=ToolStrategy(ContactInfo),  # 结构化输出，如果结果无法支持其格式化，则没有structured_response
         # response_format=ProviderStrategy(ContactInfo), # 仅主流高端模型 (OpenAI, Gemini, etc.)，直接在 Message 中生成结构化文本
         middleware=[
             PIIMiddleware(
@@ -111,6 +113,7 @@ def create_account_agent():
                 strategy="mask",
                 apply_to_input=True,
             ),
+            # 人机交互
             HumanInTheLoopMiddleware(
                 interrupt_on={
                     # Require approval for sensitive operations
@@ -120,9 +123,13 @@ def create_account_agent():
                     "search": False,
                 }
             ),
+            # filter_tools,
             handle_tool_errors,
             create_dynamic_selector(basic_llm, advanced_llm, threshold=8),
             CustomMiddleware(),  # 使用中间件来定义自定义状态，当你的自定义状态需要被特定中间件钩子和工具访问时。
+            ContentFilterMiddleware(
+                banned_keywords=["hack", "exploit", "malware"]
+            ),
         ]
     )
 
@@ -146,38 +153,65 @@ if __name__ == "__main__":
     agent = create_account_agent()
     config = {"configurable": {"thread_id": "14k234j1h3k4h132jh412k3j"}}
 
+    # 模拟已经上传到系统并由后台生成的摘要信息
+    test_uploaded_files = [
+        {
+            "id": "file_001",
+            "file_name": "budget.csv",
+            "type": "CSV",
+            "summary": "2024年公司各部门预算分配表，包含市场部、研发部、行政部的年度预算、已支出金额及剩余额度。"
+        },
+        {
+            "id": "file_002",
+            "file_name": "manual.txt",
+            "type": "PDF",
+            "summary": "智能扫地机器人手册。包含首次联网步骤、语音指令列表、传感器清理维护说明及常见错误代码提示。比如E01"
+        }
+    ]
+
     # 调用 Agent
+    # result = agent.invoke(
+    #     # {"messages": [{"role": "user", "content": "我的邮箱是 john@doe.com，信用卡卡号是 1111-2222-3333-4444"}],
+    #     {"messages": [{"role": "user", "content": "调用send_email工具发送邮件"}],
+    #      "user_preferences": {"style": "technical", "verbosity": "detailed"}, },
+    #     # 使用中间件来定义自定义状态，当你的自定义状态需要被特定中间件钩子和工具访问时。
+    #     context=UserContext(user_id="user123"),
+    #     config=config,
+    # )
+
     result = agent.invoke(
         # {"messages": [{"role": "user", "content": "我的邮箱是 john@doe.com，信用卡卡号是 1111-2222-3333-4444"}],
-        {"messages": [{"role": "user", "content": "调用send_email工具发送邮件"}],
-         "user_preferences": {"style": "technical", "verbosity": "detailed"}, },
+        {
+            "messages": [
+                {"role": "user", "content": "我是一个python开发工程师，如何用AI成为亿万富翁？"}],
+            "uploaded_files": test_uploaded_files  # 使用上面的数据
+        },
         # 使用中间件来定义自定义状态，当你的自定义状态需要被特定中间件钩子和工具访问时。
         context=UserContext(user_id="user123"),
         config=config,
     )
 
+    # 获取输入输出token数量
+    usage_metadata = result['messages'][-1].usage_metadata
+
     print("Agent 响应:")
-    result1 = agent.invoke(Command(resume={
-                "decisions": [
-                    {
-                        "type": "approve"  # 对应你截图中的 allowed_decisions: ['approve']
-                    }
-                ]
-            }),
-        config=config,
-    )
-    print(result)
+    # result1 = agent.invoke(Command(resume={
+    #             "decisions": [
+    #                 {
+    #                     "type": "approve"  # 对应你截图中的 allowed_decisions: ['approve']
+    #                 }
+    #             ]
+    #         }),
+    #     config=config,
+    # )
+    # print(result)
     # 结构化输出结果
-    print(result["structured_response"])
+    # print(result["structured_response"])
 
     # 流式传输
-    # for chunk in agent.stream({
-    #     "messages": [{"role": "user", "content": "我的邮箱是 john@doe.com，卡号是 1111-2222-3333-4444"}]
-    # }, stream_mode="values"):
-    #     # Each chunk contains the full state at that point
-    #     print('*'*100)
-    #     latest_message = chunk["messages"][-1]
-    #     if latest_message.content:
-    #         print(f"Agent: {latest_message.content}")
-    #     elif latest_message.tool_calls:
-    #         print(f"Calling tools: {[tc['name'] for tc in latest_message.tool_calls]}")
+    # for event in agent.stream(
+    #         {"messages": [{"role": "user", "content": "hi! I'm bob"}]},
+    #         config,
+    #         stream_mode="values",
+    # ):
+    #     print([(message.type, message.content) for message in event["messages"]])

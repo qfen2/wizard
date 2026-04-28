@@ -2,9 +2,14 @@ from langchain.agents import create_agent
 from langchain.agents.middleware import wrap_model_call, ModelRequest, ModelResponse
 from typing import Callable
 
+from langgraph.prebuilt import ToolRuntime
+from langgraph_sdk.schema import Context
+
+
 # 工具过滤
 @wrap_model_call
 def filter_tools(
+    runtime: ToolRuntime[Context],
     request: ModelRequest,
     handler: Callable[[ModelRequest], ModelResponse],
 ) -> ModelResponse:

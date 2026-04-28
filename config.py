@@ -117,7 +117,7 @@ REMOTE_APILIST_PATH = None
 
 # 显示路由信息
 LIST_ROUTES = True
-LLM = None
+LLM = dict()
 
 # 登录路径
 LOGIN_PATH = '/login'

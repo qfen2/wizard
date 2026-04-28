@@ -1,6 +1,6 @@
-# Tiger 项目说明
+# Wizard 项目说明
 
-这是一个基于 Flask 的后端服务项目（代号 Tiger 或 wizard ），其核心特色是集成了 LangChain 和 LangGraph 实现的复杂 AI 智能体（Agent）工作流，同时具备完善的 Web 服务基础设施。
+这是一个基于 Flask 的后端服务项目（代号 Wizard 或 wizard ），其核心特色是集成了 LangChain 和 LangGraph 实现的复杂 AI 智能体（Agent）工作流，同时具备完善的 Web 服务基础设施。
 
 以下是该项目的详细介绍：
 
@@ -40,7 +40,7 @@ pip install -r requirements.txt
 python run.py
 ```
 
-运行后默认监听 `http://127.0.0.1:5005/tiger`。
+运行后默认监听 `http://127.0.0.1:5005/Wizard`。
 
 ## 路由与视图
 

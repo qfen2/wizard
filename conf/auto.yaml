@@ -373,6 +373,10 @@ llm:
   openai:
     apikey:
   modelscope:
-    model_name: ZhipuAI/GLM-4.7
+    model_name: ZhipuAI/GLM-5.1
     api_key: ms-03a4d8f0-8e30-46ff-a49c-6dde654bfbbd
     base_url: https://api-inference.modelscope.cn/v1
+  silicon:
+    model_name: Pro/zai-org/GLM-5.1
+    api_key: sk-erqzsgshnupqduxuqgaqmuxzqodaelrggzxpzuzvkjctdhxv
+    base_url:  https://api.siliconflow.cn/v1

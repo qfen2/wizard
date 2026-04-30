@@ -375,10 +375,12 @@ llm:
     base_url: https://api.openai.com/v1
     embedding_model: text-embedding-ada-002
   modelscope:
-#    model_name: Qwen/Qwen3-Coder-480B-A35B-Instruct
     model_name: MiniMax/MiniMax-M2.5
-#    model_name: Qwen/Qwen3-Coder-Next
     api_key: ms-a3b5d6b6-6326-4f28-ae9e-93599201bca4
-#    api_key: ms-03a4d8f0-8e30-46ff-a49c-6dde654bfbbd
     base_url: https://api-inference.modelscope.cn/v1
+    embedding_model: Qwen/Qwen3-Embedding-8B
+  silicon:
+    model_name: Pro/zai-org/GLM-5.1
+    api_key: sk-erqzsgshnupqduxuqgaqmuxzqodaelrggzxpzuzvkjctdhxv
+    base_url: https://api.siliconflow.cn/v1
     embedding_model: Qwen/Qwen3-Embedding-8B

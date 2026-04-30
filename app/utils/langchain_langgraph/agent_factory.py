@@ -157,7 +157,7 @@ if __name__ == "__main__":
     test_uploaded_files = [
         {
             "id": "file_001",
-            "file_name": "budget.csv",
+            "file_name": "budget.xlsx",
             "type": "CSV",
             "summary": "2024年公司各部门预算分配表，包含市场部、研发部、行政部的年度预算、已支出金额及剩余额度。"
         },

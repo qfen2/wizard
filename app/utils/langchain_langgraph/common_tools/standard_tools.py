@@ -164,7 +164,7 @@ def read_file_content(file_name: str, runtime: ToolRuntime) -> str:
     支持的格式包括：.csv (表格数据), .pdf (文档), .txt/.md (文本)。
 
     参数:
-    - file_name: 文件名（必须包含后缀，如 'budget.csv'，'manual.txt'）
+    - file_name: 文件名（必须包含后缀，如 'budget.xlsx'，'manual.txt'）
     """
     # 1. 构建安全路径，防止恶意用户读取系统文件
     file_path = os.path.abspath(os.path.join(SAFE_BASE_DIR, file_name))

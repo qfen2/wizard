@@ -1,0 +1,765 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+	<HEAD>
+		<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE8"/>
+		<title id="mytitle">查看应付进度款</title>
+		<meta content="Microsoft Visual Studio .NET 7.1" name="GENERATOR">
+		<meta content="Visual Basic .NET 7.1" name="CODE_LANGUAGE">
+		<meta content="JavaScript" name="vs_defaultClientScript">
+		<meta content="http://schemas.microsoft.com/intellisense/ie5" name="vs_targetSchema">
+		<script type="text/javascript" src="/_controls/settings.aspx"></script><link type="text/css" rel="stylesheet" href="/_common/styles/global_css.axd?v=20180713170038" /><script type="text/javascript" src="/_common/scripts/global.js?v=20180713170038"></script><script type="text/javascript" src="/_controls/util/util.js?v=20180713170038"></script><script type="text/javascript" src="/pubproject/js/publicesb.js?v=20180713170057"></script><link href="/_nav/menu_css.axd?v=20180713170038" rel="stylesheet" type="text/css"  />
+<link href="/_forms/styles/form_css.axd?v=20180713170038" rel="stylesheet" type="text/css"  />
+<link href="/_common/styles/select_css.axd?v=20180713170038" rel="stylesheet" type="text/css"  />
+<link href="/_nav/nav_css.axd?v=20180713170038" rel="stylesheet" type="text/css"  />
+<link href="/_nav/tabs_css.axd?v=20180713170038" rel="stylesheet" type="text/css"  />
+<script type="text/javascript" src="/_nav/menu.js?v=20180713170038" ></script>
+<script type="text/javascript" src="/_forms/FormBase.js?v=20180713170038" ></script>
+<script type="text/javascript" src="/_controls/datetime/date.js?v=20180713170038" ></script>
+<script type="text/javascript" src="/_controls/datetime/time.js?v=20180713170038" ></script>
+<script type="text/javascript" src="/_controls/number/number.js?v=20180713170038" ></script>
+<script type="text/javascript" src="/_controls/lookup/map_lookup.js?v=20180713170038" ></script>
+<script type="text/javascript" src="/_controls/lookup/map_lookupDialogs.js?v=20180713170038" ></script>
+<script type="text/javascript" src="/_controls/lookup/selectteamuser.js?v=20180713170038" ></script>
+<script type="text/javascript" src="/_common/scripts/Details.js?v=20180713170038" ></script>
+<script type="text/javascript" src="/CBGL/JS/Public.js?v=20180829200916" ></script>
+<script type="text/javascript" src="/PubProject/js/Public.js?v=20180713170057" ></script>
+<script type="text/javascript" src="/CBGL/JS/Conccurency/Contract.js?v=20180713170048" ></script>
+<script type="text/javascript" src="/CBGL/JS/Conccurency/Budget.js?v=20180713170048" ></script>
+<script type="text/javascript" src="/MyWorkflow/workflow.js?v=20210113141803" ></script>
+
+	<script language="javascript">
+			//在线帮助文件
+			var _MyHelpfile = "";
+			var sNewProcess = ""; //判断是否审批
+			var ISPROCESSPASS = "0"
+			
+            //代码重构 by 朱鹏飞 2012-02-22
+			window.onload = function()
+			{
+			    if (document.getElementById("__ProcessPass"))
+			    {
+			        ISPROCESSPASS = __ProcessPass.value
+			    }
+			    //处理发起审批
+			    HTFKPlan_Schedule_Edit.SetNewProcess();
+			    //设置UI
+			    HTFKPlan_Schedule_Edit.SetUI();
+			}
+			var HTFKPlan_Schedule_Edit =
+			{
+				/******************************************************************************************************
+				控制页面显示
+				******************************************************************************************************/
+				SetUI: function() {
+					if (__mode.value == "2") {
+						if (appForm.ApproveState.getValue() == "审核中" || appForm.ApproveState.getValue() == "已审核") {
+							//一级页面点击审批通过进入
+							if (ISPROCESSPASS == "1" && appForm.ApproveState.getValue() == "审核中") {
+								document.title = "修改应付进度款"
+							}
+							else {
+								document.title = "查看应付进度款"
+							}
+						}
+						else {
+							document.title = "修改应付进度款"
+						}
+					}
+					//显示公式信息，tip提示以及小图标
+					this.SetTipInfo();
+					//设置币种，若外币则需要显示人民币的字段
+					this.SetBz();
+					//根据不同场景，控制侧边栏的显示
+					this.SetNavBarShow();
+					//展示菜单
+					this.SetMenuShow();
+					//控制字段显示
+					this.SetFieldShow();
+					//设置默认值
+					this.SetDefault();
+					// 计算应付进度款
+					this.CalScheduleAmount();
+					//设置帮助文档
+					this.SetHelpDoc();
+					appForm._bAlert = false;
+				},
+				//显示公式信息，tip提示以及小图标
+				SetTipInfo: function() {
+					var sHTML = "<IMG id='img1' alt='' src='/Cbgl/Images/exp.gif' onmouseover='HTFKPlan_Schedule_Edit.ShowGs(true)' onmouseout='HTFKPlan_Schedule_Edit.ShowGs(false)' style='CURSOR: help; POSITION: static'>";
+					var objAddCell = appForm_tabs.parentElement.parentElement.parentElement.parentElement.parentElement.insertCell(1);
+					objAddCell.align = "right";
+					objAddCell.widht = 15;
+					objAddCell.insertAdjacentHTML("BeforeEnd", sHTML);
+					appForm_tabs.parentElement.parentElement.parentElement.parentElement.parentElement.nextSibling.cells[0].colSpan = 2;
+					sHTML = "";
+					if (document.getElementById("txtEnableHTScheduleSP").value == "0" && appForm.ApproveState.getValue() != "未审核") {
+						sHTML = "&nbsp;应付进度款&nbsp;&nbsp;&nbsp;= 审定金额 - 甲供材料款 - 其它扣款<br />";
+						sHTML += "&nbsp;应付进度参考 = 审定金额 × 进度款支付比例 - 其它扣款 - 甲供材料款";
+					} else {
+						if (appForm.ApproveAmount.getValue() != 0) {
+							sHTML = "&nbsp;应付进度款&nbsp;&nbsp;&nbsp;= 审定金额 - 甲供材料款 - 其它扣款<br />";
+							sHTML += "&nbsp;应付进度参考 = 审定金额 × 进度款支付比例 - 其它扣款 - 甲供材料款";
+						} else {
+							sHTML = "&nbsp;应付进度款&nbsp;&nbsp;&nbsp;= 上报金额 - 甲供材料款 - 其它扣款<br />";
+							sHTML += "&nbsp;应付进度参考 = 上报金额 × 进度款支付比例 - 其它扣款 - 甲供材料款";
+						}
+					}
+					document.getElementById("spTipInfo").innerHTML = sHTML;
+				},
+				//设置币种的显示，若外币则需要显示人民币的字段
+				SetBz: function() {
+					if (appForm.appForm_CurrencyName.getValue() != "人民币") {
+						//隐藏币种区域
+						Section11.style.display = "";
+						//显示应付进度款人民币字段
+						HideShowElement("ScheduleAmount", "text", "block");
+					}
+					else {
+						//隐藏上报金额、应付进度款人民币字段
+						HideShowElement("ApplyAmount", "text", "none");
+						HideShowElement("ScheduleAmount", "text", "none");
+					}
+				},
+				//根据不同场景，控制侧边栏的显示
+				SetNavBarShow: function() {
+					appNavBar.showTab(1);
+					//工程类合同，显示工程量清单标签页，其它类合同，不显示工程量清单
+					if (appForm.appForm_HtKind.getValue() == "工程类") {
+						appNavBar.showTab(2);
+					}
+					else {
+						appNavBar.hiddenTab(2);
+					}
+					// 结算后增加增加应付进度款不显示扣款明细列表。。
+					// 结算前增加的应付进度款可以查看扣款明细列表，但不能新增修改。。
+					if (Form1.txtJsState.value == "结算" && appForm.appForm_IfBalanceUsed.getValue() != "1") {
+						appNavBar.hiddenTab(1);
+		            }
+		            appNavBar.showTab(3);
+				},
+				//展示菜单
+				SetMenuShow: function() {
+					var bIsEnableSp = document.getElementById("txtEnableHTScheduleSP").value;
+					if (appForm.ApproveState.getValue() == "未审核") {
+						if (bIsEnableSp != 1) {
+							reDisplay("scSave,scSaveAndClose,scTjApprove");
+						} else {
+							reDisplay("scSave,scSaveAndClose,mNewProcess");
+						}
+					} else if (appForm.ApproveState.getValue() == "审核中") {
+						if (bIsEnableSp != 1) {
+							reDisplay("scTgApprove,scBhApprove");
+						} else {
+							reDisplay("scOpenProcess");
+						}
+						//审批通过进入时隐藏审批驳回按钮
+						if (ISPROCESSPASS == "1") {
+							deDisplay("scBhApprove")
+						}
+					} else {
+						if (bIsEnableSp == 1) {
+							reDisplay("scOpenProcess");
+						} else {
+							reDisplay("scBhApprove");
+						}
+					}
+					reDisplay("mnHttz");
+					if (typeof (__viewtype) != "undefined" && __viewtype.value == "workflow") {
+						if (__mode.value == 2) {
+							reDisplay("scSave,scSaveAndClose");
+							deDisplay("scTjApprove,scBhApprove,mNewProcess,scOpenProcess");
+						} else {
+							deDisplay("scSave,scSaveAndClose,scTjApprove,scTgApprove,scBhApprove,mNewProcess,scOpenProcess");
+						}
+					}
+					//若被结算使用，则只允许查看
+					if (appForm.appForm_IfBalanceUsed.value == 1) {
+						deDisplay("scSave,scSaveAndClose,scTjApprove,scTgApprove,scBhApprove,mNewProcess,scOpenProcess");
+					}
+				},
+				//控制字段显示
+				SetFieldShow: function() {
+					//非未审核时，字段不可编辑
+					if (__mode.value == "2" && ((appForm.ApproveState.getValue() != "未审核" && typeof (__viewtype) == "undefined") || appForm.appForm_IfBalanceUsed.value == 1)) {
+						var option_one;
+						var option_two
+						if (document.getElementById("txtEnableHTScheduleSP").value == "0" && appForm.ApproveState.getValue() == "审核中") {
+							//如果审核状态为审核中且未启用工作流
+							option_one = true
+						}
+						if (ISPROCESSPASS == "1") {    //审批通过进入
+							option_two = true
+						}
+						if (option_one && option_one) {
+							appForm.ApplyAmount_Bz.setReadOnly(true);
+							appForm.ApplyDate.setReadOnly(true);
+							appForm.ApplyAmount.setReadOnly(true);
+							appForm.Applicant.setReadOnly(true);
+							appForm.PerformRemarks.setReadOnly(true);
+							appForm.RefHtTerms.setReadOnly(true)
+							appForm.ApproveDate.setReadOnly(true);
+							appForm.ApproveAmount.setReadOnly(false);
+							appForm.ApprovedBy.setReadOnly(true);
+							appForm.ItemAmount.setReadOnly(false);
+							appForm.PayPercent.setReadOnly(false);
+							appForm.Budgeteer.setReadOnly(true);
+							appForm.BudgetDocNo.setReadOnly(true);
+							appForm.ApproveDocNo.setReadOnly(true);
+							SetControlReq(appForm.ApproveAmount, true);
+							//只有其他扣款列表可以编辑
+							appNavBar.children[1].outerHTML = appNavBar.children[1].outerHTML.replace(/__mode.value/g, "2")
+							appNavBar.children[2].outerHTML = appNavBar.children[2].outerHTML.replace(/__mode.value/g, "2")
+							appNavBar.children[3].outerHTML = appNavBar.children[3].outerHTML.replace(/__mode.value/g, "2")
+						}
+						else {
+							// 上报信息不可编辑
+							appForm.ApplyAmount_Bz.setReadOnly(true);
+							appForm.ApplyDate.setReadOnly(true);
+							appForm.ApplyAmount.setReadOnly(true);
+							appForm.Applicant.setReadOnly(true);
+							appForm.PerformRemarks.setReadOnly(true);
+							appForm.RefHtTerms.setReadOnly(true)
+							appForm.ApproveDate.setReadOnly(true);
+							appForm.ApproveAmount.setReadOnly(true);
+							appForm.ApprovedBy.setReadOnly(true);
+							appForm.ItemAmount.setReadOnly(true);
+							appForm.PayPercent.setReadOnly(true);
+							appForm.Budgeteer.setReadOnly(true);
+							appForm.BudgetDocNo.setReadOnly(true);
+							appForm.ApproveDocNo.setReadOnly(true);
+							appForm.Rate.setReadOnly(true);
+							//debugger;
+							appNavBar.innerHTML = appNavBar.innerHTML.replace(/__mode.value/g, "3")
+						}
+					}
+					if (appForm.ApproveState.getValue() == "已审核") {
+						appForm.Rate.setReadOnly(true);
+					}
+					// 设置其它扣款的值
+					var fOtherDeduct = Form1.txtDeductAmount.value == "" ? "0.00" : Form1.txtDeductAmount.value;
+					appForm.OtherDeduct.setValue(fOtherDeduct);
+				},
+				//设置帮助文档
+				SetHelpDoc: function() {
+					if (appForm.ApproveState.getValue() == "已审核") {
+						_MyHelpfile = "/Cbgl/HELP/topics/合同执行人员/应付进度款/应付进度款审定.html";
+					} else {
+						_MyHelpfile = "/Cbgl/HELP/topics/合同执行人员/应付进度款.html";
+					}
+				},
+				//显示公式
+				ShowGs: function(bShow) {
+					if (!spTipInfo) return;
+					if (bShow) {
+						var x = event.clientX;
+						var y = event.clientY;
+						spTipInfo.style.left = x - 420;
+						spTipInfo.style.top = y;
+						spTipInfo.style.display = "";
+					}
+					else spTipInfo.style.display = "none";
+					document.getElementsByTagName("hr")[1].style.display = "none";
+				},
+				/*************************************************************************************************************************
+				联动计算类
+				*************************************************************************************************************************/
+				//修改审定金额、甲供材料款、增加扣款明细时重算应付进度款： 应付进度款 = 审定金额－甲供材料款－其它扣款
+				CalScheduleAmount: function() {
+					var decApproveAmount;
+					if (document.getElementById("txtEnableHTScheduleSP").value == "0" && appForm.ApproveState.getValue() != "未审核") {
+						//2、当应付进度款为已审核时或者审核中且未启用工作流
+						decApproveAmount = stringToFloat(appForm.ApproveAmount.getValue());
+					} else {
+						if (appForm.ApproveAmount.getValue() != 0) {
+							decApproveAmount = stringToFloat(appForm.ApproveAmount.getValue());
+						} else {
+							decApproveAmount = stringToFloat(appForm.ApplyAmount_Bz.getValue());
+						}
+					}
+					var decRate = stringToFloat(appForm.Rate.getValue());
+					var decItemAmount = stringToFloat(appForm.ItemAmount.getValue());
+					var decOtherDeduct = stringToFloat(appForm.OtherDeduct.getValue());
+					var decScheduleAmount_Bz = formatFloat(calcDoubleFix(calcDoubleFix(decApproveAmount, decItemAmount, '-'), decOtherDeduct, '-'), 2);
+					var decPayPercent = calcDoubleFix(stringToFloat(appForm.PayPercent.getValue()), 100, '/');
+					appForm.ScheduleAmount_Bz.setValue(decScheduleAmount_Bz);
+					appForm.ScheduleAmount.setValue(formatFloat(calcDoubleFix(decScheduleAmount_Bz, decRate, '*'), 2));
+					appForm.ScheduleConsult.setValue(formatFloat(calcDoubleFix(calcDoubleFix(calcDoubleFix(decApproveAmount, decPayPercent, '*'), decOtherDeduct, '-'), decItemAmount, '-'), 2));
+				},
+				//更改汇率
+				ChgRate: function() {
+					var decRate = stringToFloat(appForm.Rate.getValue());
+					var decApplyAmount_Bz = stringToFloat(appForm.ApplyAmount_Bz.getValue());
+					var decScheduleAmount_Bz = stringToFloat(appForm.ScheduleAmount_Bz.getValue());
+					appForm.ApplyAmount.setValue(formatFloat(calcDoubleFix(decRate, decApplyAmount_Bz, '*'), 2));
+					appForm.ScheduleAmount.setValue(formatFloat(calcDoubleFix(decRate, decScheduleAmount_Bz, '*'), 2));
+					this.CalScheduleAmount();
+				},
+				//更改上报金额
+				ChgApplyAmount: function() {
+					var decRate = stringToFloat(appForm.Rate.getValue());
+					var decApplyAmount_Bz = stringToFloat(appForm.ApplyAmount_Bz.getValue());
+					appForm.ApplyAmount.setValue(formatFloat(calcDoubleFix(decRate, decApplyAmount_Bz, '*'), 2));
+					this.CalScheduleAmount();
+				},
+				//控制工作流的发起于线下提交审批
+				SetNewProcess: function() {
+					if (document.all("__IsNewProcess")) {
+						var oid = appForm.oid.value;
+						var type = document.all("__IsNewProcess").value == "2" ? "提交审批" : "发起审批";
+						if (type == "提交审批") {
+							//提交审批
+							if (this.ValidProcess("提交审批")) {
+								if (!this.DoProcess("提交审批")) {
+									event.returnValue = false;
+									return false;
+								}
+							}
+							//刷新本页面
+							var sCurrURL = location.href.substring(0, location.href.indexOf("?"));
+							var arrURLParams = decodeURIComponent(location.href).substr(decodeURIComponent(location.href).indexOf("?") + 1).split("&");
+							// 以修改方式重定向该页面
+							var sNewURL = sCurrURL + "?mode=2&oid=" + myEscape(oid);
+							for (var i = 0; i < arrURLParams.length; i++) {
+								if (arrURLParams[i].toLowerCase().indexOf("mode=") != 0 && arrURLParams[i].toLowerCase().indexOf("oid=") != 0
+								     && arrURLParams[i].toLowerCase().indexOf("isnewprocess=") < 0)
+									sNewURL += "&" + arrURLParams[i];
+							}
+							window.navigate(escapeUrl(sNewURL));
+							// 禁用“数据改变后关闭界面时给出提示信息”的功能
+							appForm._bAlert = false;
+							event.returnValue = false;
+							//刷新本页以及父级窗体
+							afterWorkflow();
+							return false;
+						} else {
+							//发起审批校验
+							if (!this.ValidProcess("发起审批")) {
+								return false;
+							}
+							initiateBusinessProcess(appForm.oid.value, '应付进度款审批', true, "", "", "", "", "应付进度款")
+						}
+					}
+				},
+				//审批过程
+				doOpenProcess: function() {
+					//得到当前合同的工作流
+					var sFile = "/Cbgl/HTFK/HTFK_XMLHTTP.aspx?oid=" + appForm.oid.value;
+					var sRtnProcess = openXMLHTTP(sFile, "GetProcessGUIDBySchedule");
+					if (sRtnProcess == "") {
+						alert("当前记录未发起审批流程！");
+						return;
+					}
+					//审批状态的校验
+					if (!this.ValidProcess("审批过程")) {
+						return;
+					}
+					//调用工作流公用函数打开审批流程窗口			
+					openBuisinessProcess(sRtnProcess);
+				},
+				//审批通过
+				DoProcessPass: function() {
+					if (this.ValidProcess("审批通过")) {
+						//金额变动,不能直接审批通过,需要先驳回在审批
+						this.DoProcessPassForChgAmount();
+					}
+				},
+				//审批驳回
+				DoProcessIgnore: function() {
+					if (this.ValidProcess("审批驳回")) {
+						this.DoProcess("审批驳回");
+					}
+				},
+				//审批相关操作前校验
+				ValidProcess: function(tag) {
+					//审批通过时校验
+					if (tag == "审批通过") {
+						if (!appForm.IsValid()) {
+							return false;
+						}
+						//审定金额不允许为0
+						if (appForm.ApproveAmount.getValue() == "0.00") {
+							alert("审定金额不允许为0！")
+							return false;
+						}
+					}
+					var strFile = "/Cbgl/HTFK/HTFK_XMLHTTP.aspx?oid=" + appForm.oid.value + "&flag=" + myEscape(tag);
+					//审批通过场景，需要传递审定金额
+					if (tag == "审批通过") {
+						strFile += "&approveAmount=" + myEscape(appForm.ApproveAmount.getValue());
+					}
+
+					var strRtn = openXMLHTTP(strFile, "ValidScheduleProcess");
+					if (strRtn == "OK") { return true; } else {
+						alert(strRtn.split("|")[0]);
+						return false;
+					}
+				},
+				//审批操作
+				DoProcess: function(tag) {
+					var strFile = "/Cbgl/HTFK/HTFK_XMLHTTP.aspx?oid=" + appForm.oid.value + "&flag=" + myEscape(tag);
+					var strRtn = openXMLHTTP(strFile, "ScheduleDoProcess");
+					if (strRtn == "True") {
+						afterWorkflow();
+						return true;
+					} else {
+						alert("操作失败，请关闭重试！");
+						return false;
+					}
+				},
+				//获取审批状态
+				GetSpState: function() {
+					var strFile = "/Cbgl/HTFK/HTFK_XMLHTTP.aspx?oid=" + appForm.oid.value;
+					var strRtn = openXMLHTTP(strFile, "GetScheduleSpState");
+					if (strRtn == "") { return "未审核"; }
+					return strRtn;
+				},
+				SetNavigate: function(strMode) {
+					//重新刷新页面
+					var sCurrURL = location.href.substring(0, location.href.indexOf("?"));
+					var arrURLParams = decodeURIComponent(location.href).substr(decodeURIComponent(location.href).indexOf("?") + 1).split("&");
+					// 以修改方式重定向该页面
+					var sNewURL = sCurrURL + "?mode=" + strMode + "&oid=" + myEscape(appForm.oid.value);
+					for (var i = 0; i < arrURLParams.length; i++) {
+						if (arrURLParams[i].toLowerCase().indexOf("mode=") != 0 && arrURLParams[i].toLowerCase().indexOf("oid=") != 0
+			                && arrURLParams[i].toLowerCase().indexOf("isnewprocess=") < 0)
+							sNewURL += "&" + arrURLParams[i];
+					}
+					window.navigate(escapeUrl(sNewURL));
+					appForm._bAlert = false;
+					event.returnValue = false;
+					return;
+				},
+				SetDefault: function() {
+					//审批通过进入时赋值默认值
+					if (ISPROCESSPASS == "1" || (document.getElementById("txtEnableHTScheduleSP").value == "0" && appForm.ApproveState.getValue() == "审核中")) {
+						appForm.ApproveAmount.setValue(appForm.ApplyAmount_Bz.getValue());
+					}
+				},
+				DoProcessPassForChgAmount: function() {
+					//收集页面中需要更新的数据
+					var arrDataList = [];
+					arrDataList.push('<cb_HTSchedule  keyname="HTScheduleGUID" keyvalue="' + appForm.oid.getValue() + '">')
+					arrDataList.push('<ApproveAmount>' + appForm.ApproveAmount.getValue().replace(/,/g, "") + '</ApproveAmount>')
+					arrDataList.push('<ScheduleAmount_Bz>' + appForm.ScheduleAmount_Bz.getValue().replace(/,/g, "") + '</ScheduleAmount_Bz>')
+					arrDataList.push('<ScheduleAmount>' + appForm.ScheduleAmount.getValue().replace(/,/g, "") + '</ScheduleAmount>')
+					arrDataList.push('<ScheduleConsult>' + appForm.ScheduleConsult.getValue().replace(/,/g, "") + '</ScheduleConsult>')
+					arrDataList.push('<ItemAmount>' + appForm.ItemAmount.getValue().replace(/,/g, "") + '</ItemAmount>')
+					arrDataList.push('<OtherDeduct>' + appForm.OtherDeduct.getValue().replace(/,/g, "") + '</OtherDeduct>')
+					arrDataList.push('<PayPercent>' + appForm.PayPercent.getValue().replace(/,/g, "") + '</PayPercent>')
+					arrDataList.push('</cb_HTSchedule>')
+					var sUserXml = "<myxml>";
+					var o = document.all("__appNavBar_areaAddress1"); // 扣款明细侧标签页面
+					if (o) {
+						try {
+							Form1.txtHTDeductListXml.value = o.firstChild.contentWindow.getHTDeductListXml("gridBar", "cb_HTDeduct", "HTDeductGUID");
+						}
+						catch (e) { logException(e); }
+						finally {
+							sUserXml += Form1.txtHTDeductListXml.value;
+						}
+					}
+					var o = document.all("__appNavBar_areaAddress2"); // 工程量清单侧标签页面
+					if (o) {
+						try {
+							Form1.txtGCLListXml.value = o.firstChild.contentWindow.getGCLListXml("gridBar", "cb_GclBill", "GclBillGUID");
+						}
+						catch (e) { logException(e); }
+						finally {
+							sUserXml += Form1.txtGCLListXml.value;
+						}
+					}
+					sUserXml = sUserXml + "</myxml>";
+					var strFile = "/Cbgl/HTFK/HTFK_XMLHTTP.aspx?HTScheduleGUID=" + appForm.oid.value
+					var strRtn = openXMLHTTP(strFile, "DoProcessPassForChgAmount", arrDataList.join("") + "|" + sUserXml);
+					if (strRtn == "True") {
+						afterWorkflow();
+						return true;
+					} else {
+						alert("操作失败，请关闭重试！");
+						return false;
+					}
+				}
+			}
+			window.UpdateOtherDeduct = function(sDeduct) {
+			    appForm.OtherDeduct.setValue(sDeduct);
+			    HTFKPlan_Schedule_Edit.CalScheduleAmount();
+			};
+			//************** 保存操作 **************//
+			//功能：保存前，校验、收集数据
+			// 可以通过 appForm.userxml 设置自己的 xml，在后端接收处理
+			// 通过设置 event.returnValue = true/false 确定是否提交保存
+			function oprBeforeSave() {
+			    if (!scheduleConccurency.lockData(180, "保存应付进度款")) {
+			        event.returnValue = false;
+			        return;
+			    }
+			    try {
+			        //1、校验数据
+			        if (ValidData() == false) {
+			            event.returnValue = false;
+			            return;
+			        }
+			        //2、收集数据	
+			        // 拼接Form的xml：appForm.dataxml
+			        // 拼接自定义保存参数：appForm.userxml = "<myxml>我定义的xml</myxml>"
+			        var sUserXml = "<myxml>";
+			        var o = document.all("__appNavBar_areaAddress1"); // 扣款明细侧标签页面
+			        if (o) {
+			            try {
+			                Form1.txtHTDeductListXml.value = o.firstChild.contentWindow.getHTDeductListXml("gridBar", "cb_HTDeduct", "HTDeductGUID");
+			            }
+			            catch (e) { logException(e); }
+			            finally {
+			                sUserXml += Form1.txtHTDeductListXml.value;
+			            }
+			        }
+			        var o = document.all("__appNavBar_areaAddress2"); // 工程量清单侧标签页面
+			        if (o) {
+			            try {
+			                Form1.txtGCLListXml.value = o.firstChild.contentWindow.getGCLListXml("gridBar", "cb_GclBill", "GclBillGUID");
+			            }
+			            catch (e) { logException(e); }
+			            finally {
+			                sUserXml += Form1.txtGCLListXml.value;
+			            }
+			        }
+			        
+			        //获取文件上传的临时GUID
+                    if (!!appForm.appForm_FKGUID.getValue()) {
+                        sUserXml += "<FKGUID>" + appForm.appForm_FKGUID.getValue() + "</FKGUID>";
+                    }
+			        
+			        sUserXml += "</myxml>"
+			        appForm.userxml = sUserXml;
+			        event.returnValue = true;
+			    }
+			    catch (ex) { scheduleConccurency.release(); event.returnValue = false; throw ex; }
+			    finally {
+			        if (event.returnValue === false) {
+			            scheduleConccurency.release();
+			        }
+			    }
+			}
+			//功能：保存后，补充处理
+			// 可以通过 appForm.returnxml 取到返回值
+			// 通过设置 event.returnValue = true/false 确定是否需要系统自动处理后续步骤
+			function oprAfterSave()
+			{
+			    scheduleConccurency.release();
+				var xmlDom = new ActiveXObject("Microsoft.XMLDOM")
+				try
+				{
+				    xmlDom.loadXML(appForm.returnxml);
+				    if (sNewProcess != "1" && sNewProcess != "2")
+				    {
+				        if (confirm("是否同步调整付款计划？"))
+				        {
+				            var sPath, strContractGUID;
+				            strContractGUID = appForm.ContractGUID.getValue();
+				            sPath = "/CBGL/HTFK/HTFKPlan_PayPlan_Edit.aspx?mode=2&oid=" + strContractGUID + "&OpenSource=ScheduleRef";
+				            openMyWin(sPath)
+				        }
+				    }
+				    if (xmlDom.documentElement.attributes.getNamedItem("result").value == "true") {
+				        sOid = xmlDom.documentElement.attributes.getNamedItem("keyvalue").value
+				        if (sNewProcess == "1" || sNewProcess == "2") {
+				            //提交审批或发起审批，直接更改页面URL，然后在PageLoad里面执行发起操作
+				            var sCurrURL = location.href.substring(0, location.href.indexOf("?"));
+				            var arrURLParams = decodeURIComponent(location.href).substr(decodeURIComponent(location.href).indexOf("?") + 1).split("&");
+				            // 以修改方式重定向该页面
+				            var sNewURL = sCurrURL + "?mode=2&oid=" + myEscape(sOid);
+				            for (var i = 0; i < arrURLParams.length; i++) {
+				                if (arrURLParams[i].toLowerCase().indexOf("mode=") != 0 && arrURLParams[i].toLowerCase().indexOf("oid=") != 0
+						            && arrURLParams[i].toLowerCase().indexOf("isnewprocess=") < 0)
+				                    sNewURL += "&" + arrURLParams[i];
+				            }
+				            //增加需要发起审批参数
+				            sNewURL += "&IsNewProcess=" + sNewProcess;
+				            window.navigate(escapeUrl(sNewURL));
+				            appForm._bAlert = false;
+				            event.returnValue = false;
+				            return;
+				        } else {
+				            if (document.all("__IsNewProcess")) {
+				                //保存时，需要去除此参数，防止重复发起
+				                window.navigate(escapeUrl(document.URL.replace("IsNewProcess=", "IsNewProcessDel=")));
+				                // 禁用“数据改变后关闭界面时给出提示信息”的功能
+				                appForm._bAlert = false;
+				            } 
+				        } 
+				    }
+				}
+				catch(e)
+				{	logException(e);	
+					alert("返回的xml格式错误，请与管理员联系！");
+					return;
+				}
+				// 刷新动态成本数据
+				try {
+				    window.opener.GetDTCBMsg();
+				}
+				catch (e) { logException(e); }
+			}
+			//功能：保存前数据校验
+			function ValidData()
+			{
+				// 金额不能为零
+				if (stringToFloat(appForm.ApplyAmount.getValue()) == 0 )
+				{
+					alert("上报金额不允许为零！");
+					return false;
+				}
+				var decYcfAmount = stringToFloat(appForm.YcfAmount.getValue());			// 已拆分金额
+				var decScheduleAmount = stringToFloat(appForm.ScheduleAmount.getValue());	// 应付进度款
+				//修改模式下，需要比较已拆分金额与应付进度款
+				if (Form1.txtCfMode.value == "手动拆分" && __mode.value=="2" )	
+				{
+					if (decYcfAmount > 0 && decScheduleAmount < decYcfAmount)
+					{
+						alert("应付进度款不允许小于已拆分金额： " + decYcfAmount.toLocaleString() + "！");
+						return false ;
+					}
+					if (decYcfAmount < 0 && decScheduleAmount > decYcfAmount)
+					{
+						alert("应付进度款不允许大于已拆分金额：" + decYcfAmount.toLocaleString() + "！");
+						return false;
+					}
+				}
+				if (appForm.oid.value) {
+				    var strFile = "/Cbgl/HTFK/HTFK_XMLHTTP.aspx?oid=" + appForm.oid.value;
+				    var strRtn = openXMLHTTP(strFile, "ValidScheduleState");
+				    if (strRtn != "FAIL") {
+				        if (appForm.ApproveState.value != strRtn) {
+				            alert("当前应付进度款审核状态与数据库不一致，不允许保存！");
+				            return false;
+				        }
+				        return true;
+				    } else {
+				        alert("获取应付进度款审核状态失败！");
+				        return false;
+				    }
+				}
+			}
+			//刷新
+			function afterWorkflow() {
+			    var SPState = HTFKPlan_Schedule_Edit.GetSpState();
+			    if (SPState == "未审核") {
+			        window.navigate(escapeUrl(document.URL.replace("mode=3", "mode=2").replace("IsNewProcess", "ss").replace(myEscape("查看应付进度款"), myEscape("修改应付进度款"))));
+			    } else if (SPState == "审核中") {
+			        window.navigate(escapeUrl(document.URL.replace("IsNewProcess", "ss").replace(myEscape("修改应付进度款"), myEscape("查看应付进度款"))));
+			    } else {
+			        window.navigate(escapeUrl(document.URL.replace("IsNewProcess", "ss")));
+			    }
+			    window.opener.RefreshMe();
+			    window.opener.parent._appGrid_Query("" + appForm.ContractGUID.getValue() + "");   // 刷新合同列表网格并定位记录
+			}
+			// 合同并发控制对象
+			var scheduleConccurency = new (function() {
+			    var _resIdentify, _me = this, _lockInfo, _timeout;
+			    var 
+                _lockContract = function(contractGUID) {
+                    /// <summary>锁定合同</summary>
+                    try {
+                        // 没有合约规划，所以不需要锁合约规划
+                        _resIdentify = Conccurency.Contract.LockContract(contractGUID, { resIdentify: _resIdentify, lockInfo: _lockInfo, timeout: _timeout });
+                    }
+                    catch (ex) {
+                        switch (ex.type) {
+                            case "CONFLICT":
+                                alert("当前应付进度款对应的合同或相关数据已被用户【" + ex.userName + "】在【" + ex.module + "】模块锁定！");
+                                break;
+                            case "NETTIMEOVER":
+                                alert("网络连接超时，请重新登录！");
+                                break;
+                            default:
+                                alert("操作失败，请关闭重试！");
+                                break;
+                        }
+                        return false;
+                    }
+                    return true;
+                };
+			    this.lockData = function(timeout, lockInfo) {
+			        /// <summary>在保存或审批时锁定数据,合同GUID从appForm.ContractGUID.value中获取</summary>
+			        /// <returns type="Boolean" />
+			        _lockInfo = lockInfo;
+			        _timeout = timeout;
+			        if (Form1.txtDoneMode.value == "CHECK") {
+			            if (!_lockContract(appForm.ContractGUID.value)) {
+			                return false;
+			            }
+			        }
+			        return true;
+			    };
+			    this.release = function() {
+			        /// <summary>释放锁</summary>
+			        if (_resIdentify) {
+			            try { Conccurency.Contract.UnLock(_resIdentify); _resIdentify = null; } catch (ex) { alert("释放资源失败，如果继续操作，请等待" + (_timeout / 60) + "分钟！") }
+			        }
+			    }
+			    window.attachEvent("onbeforeunload", _me.release);
+			})();
+		</script>
+	       </HEAD>
+	<body MS_POSITIONING="GridLayout">
+		<form name="Form1" method="post" action="HTFKPlan_Schedule_Edit.aspx?mode=2&amp;title=%u67e5%u770b%u5e94%u4ed8%u8fdb%u5ea6%u6b3e&amp;ContractGUID=2185773f-4cc9-ed11-80c4-b1fe5a19d94c&amp;oid=5919eb4a-68d1-ee11-80c4-b1fe5a19d94c" id="Form1">
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="/wEPDwUKLTUxNjQ4NDUyMg8WBB4ObXlzZXNzaW9uc3RhdGUFJDBlNjQzOWI2LWU3MzMtZjExMS04MGM1LWM3ZmRlYWI2YmU3NB4GX3N0YXRlCyl+TXlzb2Z0Lk1hcC5BcHBsaWNhdGlvbi5UeXBlcy5QYWdlU3RhdGUsIE15c29mdC5NYXAuQ29yZSwgVmVyc2lvbj0zLjUuMi4yMTEzMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj0zMmUyYzdmOWUwMzRjMTUyAhYCAgEPFgIeCWlubmVyaHRtbAUV5p+l55yL5bqU5LuY6L+b5bqm5qy+ZGRFfS4IT76UX1VAP//mq1dpkXxd/g==" />
+
+<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="98CAE0B0" />
+<input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="/wEWCQLhgbGtDwKo0+bJAgLW7bjMBAKSmP7SDwK3w5rSDQL2j9ubDAKNn9nhDgKG+Z3oDgKKvsmMB2duBIFIcZjn+mgIJGNIoesgUEDe" />
+			<!-- 业务参数  -->
+			<input name="txtDeductAmount" type="text" value="0.0000" id="txtDeductAmount" style="DISPLAY: none" />
+			<input name="txtDoneMode" type="text" id="txtDoneMode" style="DISPLAY: none" />
+			<input name="txtLicenseCbgl" type="text" value="1" id="txtLicenseCbgl" style="DISPLAY: none" />
+			<input name="txtEnableHTScheduleSP" type="text" value="1" id="txtEnableHTScheduleSP" style="DISPLAY: none" />
+			<!-- 主合同参数  -->
+			<input name="txtCfMode" type="text" value="自动拆分" id="txtCfMode" style="DISPLAY: none" />
+			<input name="txtJsState" type="text" id="txtJsState" style="DISPLAY: none" />
+			<!-- 附属表信息  -->
+			<input name="txtHTDeductListXml" type="text" id="txtHTDeductListXml" style="DISPLAY: none" />
+			<input name="txtGCLListXml" type="text" id="txtGCLListXml" style="DISPLAY: none" />
+			<div id="spTipInfo" style="BORDER-RIGHT: 1px solid; display:none;PADDING-RIGHT: 5px; BORDER-TOP: 1px solid; PADDING-LEFT: 5px; Z-INDEX: 101; PADDING-BOTTOM: 5px; BORDER-LEFT: 1px solid; WIDTH: 420px; PADDING-TOP: 5px; BORDER-BOTTOM: 1px solid; POSITION: absolute;  HEIGHT: 25px;BACKGROUND-COLOR: infobackground">
+				&nbsp;应付进度款&nbsp;&nbsp;&nbsp;= 审定金额 - 甲供材料款 - 其它扣款<br />
+				&nbsp;应付进度参考 = 审定金额 × 进度款支付比例 - 其它扣款 - 甲供材料款
+			</div>
+			</form>
+		<table class="layout" cellSpacing="0" cellPadding="0">
+			<COLGROUP>
+				<col width="140"> <!-- 菜单：140px -->
+				<col>
+			</COLGROUP>
+			<tr height="48">
+				<td colSpan="2"><!-- 菜单 --><script type="text/javascript" language="javascript">(function(){var a = document.createElement('div');a.innerHTML = '<div id="__divLoadingappFormMenu" name="__divLoading" style="position:absolute;display:block;top:0px;left:0px;width:100%;height:1000px;z-index:100;background-color:#CCCCCC;filter:Alpha(Opacity=60)"><table style="width:100%;height:600px"><tr><td style="vertical-align:middle" align="middle"><img alt="" src="/_imgs/progress.gif"><br/><div id="__divMessageappFormMenu" name="__divMessage"></div></td></tr></table></div><iframe id="__ifrmLoadingappFormMenu" style="position:absolute;display:block;top:0px;left:0px;width:2000px;height:1000px;z-index:99;filter:Alpha(Opacity=0)"></iframe>';document.body.insertBefore(a.childNodes[1], document.body.firstChild);document.body.insertBefore(a.firstChild, document.body.firstChild);})();</script>
+<script type="text/javascript" language="javascript">
+window.__IsContainAppFormMenu = true;
+</script>
+<table cellspacing="0" cellpadding="0" class="mnubar"><tr><td width="9"><img src="/_imgs/mnu_vSpacer.gif" hspace="3"></td><td class="icMenu" noWrap><span  id="m1"  style="display:none"  _display="1"  _isDisplayed="0"  menu="__appFormMenu_m0"  tabIndex="0" class="menu">文件<table id="__appFormMenu_m0" class="mnuList" cellspacing="0" cellpadding="3"><COLGROUP><col class="mnuLeft"><col class="mnuItm"><col width="20" align="right"><tr  id="mClose"  style="display:none"  _display="1"  _isDisplayed="0"  action="if (_iLocked<=0) {_lock();try{window.close()} catch(e){} finally{_unlock();}}"  syslock="0"  _isshow="1"  act="if (_iLocked<=0) {_lock();try{window.close()} catch(e){} finally{_unlock();}}"  tabIndex="0"><td></td><td noWrap colspan="2">关闭</td></tr></table></span><span  style="display:none"  _display="1"  _isDisplayed="0"  menu="__appFormMenu_m1"  tabIndex="0" class="menu">帮助<table id="__appFormMenu_m1" class="mnuList" cellspacing="0" cellpadding="3"><COLGROUP><col class="mnuLeft"><col class="mnuItm"><col width="20" align="right"><tr  style="display:none"  _display="1"  _isDisplayed="0"  action="if (_iLocked<=0) {_lock();try{window.document.fireEvent('onhelp');} catch(e){} finally{_unlock();}}"  syslock="0"  _isshow="1"  act="if (_iLocked<=0) {_lock();try{window.document.fireEvent('onhelp');} catch(e){} finally{_unlock();}}"  tabIndex="0"><td></td><td noWrap colspan="2">帮助</td></tr><tr  style="display:none"  _display="1"  _isDisplayed="0"  action="if (_iLocked<=0) {_lock();try{openAbout();} catch(e){} finally{_unlock();}}"  syslock="0"  _isshow="1"  act="if (_iLocked<=0) {_lock();try{openAbout();} catch(e){} finally{_unlock();}}"  tabIndex="1"><td></td><td noWrap colspan="2">关于明源地产ERP</td></tr></table></span></td></tr></table><table cellspacing="0" cellpadding="0" class="mnubar" style="height:26px; table-layout:fixed;"><tr><td width="9"><img src="/_imgs/mnu_vSpacer.gif" hspace="3"></td><td class="icMenu" noWrap><span  funcid="02010400" actionid="03"  id="scSave"  style="display:none"  _display="0"  _isDisplayed="0"  syslock="0"  action="if (_iLocked<=0) {_lock();try{auditLogSetCookie('_audit_log','02010400,03,5L+d5a2Y');appForm.Save()} catch(e){} finally{_unlock();}}"  class="menu"  _isshow="1"  onclick="window.execScript(this.action);"  act="if (_iLocked<=0) {_lock();try{auditLogSetCookie('_audit_log','02010400,03,5L+d5a2Y');appForm.Save()} catch(e){} finally{_unlock();}}" ><img src="/images/Save_16_blue.gif" class="mnuBtn"><span class="mnuBtn">保存</span></span><span  funcid="02010400" actionid="03"  id="scSaveAndClose"  style="display:none"  _display="0"  _isDisplayed="0"  syslock="0"  action="if (_iLocked<=0) {_lock();try{auditLogSetCookie('_audit_log','02010400,03,5L+d5a2YJuWFs+mXrQ==');appForm.SaveAndClose()} catch(e){} finally{_unlock();}}"  class="menu"  _isshow="1"  onclick="window.execScript(this.action);"  act="if (_iLocked<=0) {_lock();try{auditLogSetCookie('_audit_log','02010400,03,5L+d5a2YJuWFs+mXrQ==');appForm.SaveAndClose()} catch(e){} finally{_unlock();}}" ><img src="/images/SaveClose_16_blue.gif" class="mnuBtn"><span class="mnuBtn">保存&关闭</span></span><span  funcid="02010400" actionid="05"  id="mNewProcess"  style="display:none"  _display="0"  _isDisplayed="0"  syslock="0"  action="if (_iLocked<=0) {_lock();try{auditLogSetCookie('_audit_log','02010400,05,5Y+R6LW35a6h5om5');sNewProcess='1';appForm.Save();} catch(e){} finally{_unlock();}}"  class="menu"  _isshow="1"  onclick="window.execScript(this.action);"  act="if (_iLocked<=0) {_lock();try{auditLogSetCookie('_audit_log','02010400,05,5Y+R6LW35a6h5om5');sNewProcess='1';appForm.Save();} catch(e){} finally{_unlock();}}" ><img src="/cbgl/images/tjsp_16.gif" class="mnuBtn"><span class="mnuBtn">发起审批</span></span><span  funcid="02010400" actionid="06"  id="scOpenProcess"  style="display:none"  _display="0"  _isDisplayed="0"  syslock="0"  action="if (_iLocked<=0) {_lock();try{auditLogSetCookie('_audit_log','02010400,06,5a6h5om56L+H56iL');HTFKPlan_Schedule_Edit.doOpenProcess();} catch(e){} finally{_unlock();}}"  class="menu"  _isshow="1"  onclick="window.execScript(this.action);"  act="if (_iLocked<=0) {_lock();try{auditLogSetCookie('_audit_log','02010400,06,5a6h5om56L+H56iL');HTFKPlan_Schedule_Edit.doOpenProcess();} catch(e){} finally{_unlock();}}" ><img src="/cbgl/images/ckspgc_16.gif" class="mnuBtn"><span class="mnuBtn">审批过程</span></span><span  funcid="02010400" actionid="07"  id="scTjApprove"  style="display:none"  _display="0"  _isDisplayed="0"  syslock="0"  action="if (_iLocked<=0) {_lock();try{auditLogSetCookie('_audit_log','02010400,07,5o+Q5Lqk5a6h5om5');sNewProcess='2';appForm.Save();} catch(e){} finally{_unlock();}}"  class="menu"  _isshow="1"  onclick="window.execScript(this.action);"  act="if (_iLocked<=0) {_lock();try{auditLogSetCookie('_audit_log','02010400,07,5o+Q5Lqk5a6h5om5');sNewProcess='2';appForm.Save();} catch(e){} finally{_unlock();}}" ><img src="/cbgl/images/tjsp_16.gif" class="mnuBtn"><span class="mnuBtn">提交审批</span></span><span  funcid="02010400" actionid="08"  id="scTgApprove"  style="display:none"  _display="0"  _isDisplayed="0"  syslock="0"  action="if (_iLocked<=0) {_lock();try{auditLogSetCookie('_audit_log','02010400,08,5a6h5om56YCa6L+H');HTFKPlan_Schedule_Edit.DoProcessPass();} catch(e){} finally{_unlock();}}"  class="menu"  _isshow="1"  onclick="window.execScript(this.action);"  act="if (_iLocked<=0) {_lock();try{auditLogSetCookie('_audit_log','02010400,08,5a6h5om56YCa6L+H');HTFKPlan_Schedule_Edit.DoProcessPass();} catch(e){} finally{_unlock();}}" ><img src="/cbgl/images/sptg_16.gif" class="mnuBtn"><span class="mnuBtn">审批通过</span></span><span  funcid="02010400" actionid="09"  id="scBhApprove"  style="display:none"  _display="0"  _isDisplayed="0"  syslock="0"  action="if (_iLocked<=0) {_lock();try{auditLogSetCookie('_audit_log','02010400,09,5a6h5om56amz5Zue');HTFKPlan_Schedule_Edit.DoProcessIgnore();} catch(e){} finally{_unlock();}}"  class="menu"  _isshow="1"  onclick="window.execScript(this.action);"  act="if (_iLocked<=0) {_lock();try{auditLogSetCookie('_audit_log','02010400,09,5a6h5om56amz5Zue');HTFKPlan_Schedule_Edit.DoProcessIgnore();} catch(e){} finally{_unlock();}}" ><img src="/cbgl/images/spbh_16.gif" class="mnuBtn"><span class="mnuBtn">审批驳回</span></span><span  id="mnHttz"  style="display:none"  _display="0"  _isDisplayed="0"  syslock="0"  action="if (_iLocked<=0) {_lock();try{OpenContractAllInfo(appForm.ContractGUID.value,'付款信息')} catch(e){} finally{_unlock();}}"  class="menu"  _isshow="1"  onclick="window.execScript(this.action);"  act="if (_iLocked<=0) {_lock();try{OpenContractAllInfo(appForm.ContractGUID.value,'付款信息')} catch(e){} finally{_unlock();}}" ><img src="/cbgl/images/ContractEstradecb_16_blue.gif" class="mnuBtn"><span class="mnuBtn">合同台帐</span></span><img  id="scSpace1"  style="display:none"  _display="1"  _isDisplayed="0"  src="/_imgs/separator.gif"><span  id="scClose"  style="display:none"  _display="1"  _isDisplayed="0"  syslock="0"  action="if (_iLocked<=0) {_lock();try{window.close()} catch(e){} finally{_unlock();}}"  class="menu"  _isshow="1"  onclick="window.execScript(this.action);"  act="if (_iLocked<=0) {_lock();try{window.close()} catch(e){} finally{_unlock();}}" ><img src="/images/Close_16_blue.gif" class="mnuBtn"><span class="mnuBtn">关闭</span></span></td></tr></table><script type="text/javascript" language="javascript">var __rMenu=["__htcMenu","menu.htc"];if(typeof window.__resourceListMenu=="undefined")window.__resourceListMenu=__rMenu;else window.__resourceListMenu=window.__resourceListMenu.concat(__rMenu);</script>
+</td>
+			</tr>
+			<tr>
+				<td class="leftBar"><!-- 侧标签 --><span class="leftBar" id="appNavBar" defaultArea="__appNavBar_navInfo"><div class="lbItem" tabIndex="0" title="主要信息"  id="__appNavBar_navInfo" onclick='loadArea("areaForm", "","")'><img src="/cbgl/images/info_16_wihte.gif" align="absmiddle">&nbsp; 主要信息</div><div class="lbItem" tabIndex="1" title="扣款明细"  onclick='loadArea("__appNavBar_areaAddress1", "/cbgl/htfk/htfkplan_schedule_edit_deductgrid.aspx","<params><param name=\"mode\" value=\"__mode.value\" /><param name=\"HTScheduleGUID\" value=\"appForm.oid.value\" /><param name=\"ContractGUID\" value=\"appForm.ContractGUID.value\" /></params>")'><img src="/cbgl/images/detaincb_16_wihte.gif" align="absmiddle">&nbsp; 扣款明细</div><div class="lbItem" tabIndex="2" title="工程量清单"  onclick='loadArea("__appNavBar_areaAddress2", "/cbgl/htfk/htfkplan_schedule_edit_gclgrid.aspx","<params><param name=\"mode\" value=\"__mode.value\" /><param name=\"HTScheduleGUID\" value=\"appForm.oid.value\" /><param name=\"ContractGUID\" value=\"appForm.ContractGUID.value\" /></params>")'><img src="/cbgl/images/engineerlistcb_16_wihte.gif" align="absmiddle">&nbsp; 工程量清单</div><div class="lbItem" tabIndex="3" title="相关文档"  onclick='loadArea("__appNavBar_areaAddress3", "/cbgl/pub/tab_doclist.aspx?doctype=%u5e94%u4ed8%u8fdb%u5ea6%u6b3e","<!-- 应付进度款编码--><params><param name=\"mode\" value=\"__mode.value\" /><param name=\"FkGUID\" value=\"appForm.appForm_FKGUID.getValue()\" /><param name=\"PageState\" value=\"__mode.value\" /></params>")'><img src="/cbgl/images/document_16_wihte.gif" align="absmiddle">&nbsp; 相关文档</div></span><script language="javascript">function _createIframe(){}</script></td>
+				<td id="tdAreas">
+					<div class="area" id="areaForm"><!-- 表单主体 -->
+						<script type="text/javascript" language="javascript">
+window.__IsContainAppForm = true;
+</script>
+<table width="100%" height="100%" cellspacing="0" cellpadding="0"><form name="appForm" class="map2" ProcessType="xmlhttp" onbeforesave="try{oprBeforeSave()}catch(e){event.returnValue=false;showError(e);logException(e)}" onaftersave="oprAfterSave()"><input type="hidden" name="appForm_RootElem" value="cb_HTSchedule"><input type="hidden" name="appForm_KeyName" value="HTScheduleGUID"><input type="hidden" name="appForm_AppName" value="Default"><input type="hidden" name="appForm_IsNumDefaultZero" value="1"><tr height="25"><td><table cellspacing="0" cellpadding="0" class="tabBar" onafterchange="appForm.SetTabFocus();"><tr><td id="appForm_tabs" nowrap valign="bottom"><span tabindex="0" class="tab tabOn" tabID="appForm_tab0">基本资料</span></td></tr></table><hr id="appForm_hrSelectedTab" class="tabGlow"><hr id="appForm_hrGlowTab" class="tabGlow"></td></tr><tr><td valign="top"><div class="tab" id="appForm_tab0" style="display:inline;"><table width="100%" cellspacing="0" cellpadding="3" style="table-layout:fixed;" id="Section1"><col width="120"><col><col width="140" style="padding-left:20px;"><col><input type="hidden" class="hid" name="oid" value="5919eb4a-68d1-ee11-80c4-b1fe5a19d94c"><input type="hidden" class="hid" name="ContractGUID" value="2185773f-4cc9-ed11-80c4-b1fe5a19d94c"><input type="hidden" class="hid" name="appForm_HtKind" value="工程类"><input type="hidden" class="hid" name="appForm_FKGUID" value="5919eb4a-68d1-ee11-80c4-b1fe5a19d94c"><input type="hidden" class="hid" name="YcfAmount" value="0.0000"><input type="hidden" class="hid" name="ApproveState" value="已审核"><input type="hidden" class="hid" name="appForm_IfBalanceUsed" value="0"><input type="hidden" class="hid" name="Bz" value="f1ae9c30-fe32-4844-a772-23a9bb044d08"><tr><td>合同编号</td><td><input type="text" class="txt" readOnly name="appForm_ContractCode" value="QT-3Q-2018-004"></td><td>合同名称</td><td><input type="text" class="txt" readOnly name="appForm_ContractName" value="明源云地产ERP软件系统及SAAS合同"></td></tr><tr height="10"><td></td></tr></table><table width="100%" cellspacing="0" cellpadding="3" style="table-layout:fixed;display:none" id="Section11"><col width="120"><col><col width="140" style="padding-left:20px;"><col><tr><td>币种</td><td><input type="text" class="txt" readOnly name="appForm_CurrencyName" value="人民币"></td><td>汇率</td><td><input type="text" class="num" readOnly ro="0" fo="1" name="Rate" value="1.0000" returnValue="1.0000" min="-99999999999" max="99999999999" grp="true" acc="4" dt="" onreturnvaluechange="try{HTFKPlan_Schedule_Edit.ChgRate()}catch(e){event.returnValue=false;showError(e);logException(e)}"></td></tr><tr height="10"><td></td></tr></table><table width="100%" cellspacing="0" cellpadding="3" style="table-layout:fixed;" id="Section12"><col width="120"><col><col width="140" style="padding-left:20px;"><col><tr><td class="req">进度款支付比例(%)</td><td><input type="text" class="num" readOnly ro="0" name="PayPercent" value="100.00" returnValue="100.00" min="0" max="100" grp="true" acc="2" dt="" onreturnvaluechange="try{HTFKPlan_Schedule_Edit.CalScheduleAmount()}catch(e){event.returnValue=false;showError(e);logException(e)}" req="1"></td><td>应付进度参考</td><td><input type="text" class="num" readOnly name="ScheduleConsult" value="103,000.00" returnValue="103000.00" min="-999999999999" max="999999999999" grp="true" acc="2" dt=""></td></tr><tr><td>应付进度款</td><td><input type="text" class="num" readOnly name="ScheduleAmount_Bz" value="103,000.00" returnValue="103000.00" min="-999999999999" max="999999999999" grp="true" acc="2" dt=""></td><td>应付进度款(￥)</td><td><input type="text" class="num" readOnly name="ScheduleAmount" value="103,000.00" returnValue="103000.00" min="-99999999999999" max="99999999999999" grp="true" acc="2" dt=""></td></tr><tr height="10"><td></td></tr></table><table width="100%" cellspacing="0" cellpadding="3" style="table-layout:fixed;" id="Section2"><col width="90"><col><col width="110" style="padding-left:20px;"><col><col width="110" style="padding-left:20px;"><col><tr><td colspan="6" class="sec bar">上报信息</td></tr><tr height="5"><td></td></tr><tr><td class="req">上报日期</td><td><table  id="_ApplyDate_Table" name="_ApplyDate_Table"  cellpadding="0" cellspacing="0" width="100%" style="TABLE-LAYOUT:fixed"><col><col width="40"><tr><td><input type="text" mapType="dtm" class="dtm" time="0" maxlength="10"  readOnly ro="0" name="ApplyDate" value="2024-02-22" returnValue="2024-02-22 00:00:00" req="1"></td><td style="PADDING-LEFT:4px"><img class="dtm" src="/_imgs/btn_off_cal.gif"></td></tr></table></td><td>上报人</td><td><input type="text" class="txt" readOnly ro="0" name="Applicant" value="张秀亮" maxlength="20"></td><td class="req">上报金额</td><td><input type="text" class="num" readOnly ro="0" name="ApplyAmount_Bz" value="103,000.00" returnValue="103000.00" min="-99999999999" max="99999999999" grp="true" acc="2" dt="" onreturnvaluechange="try{HTFKPlan_Schedule_Edit.ChgApplyAmount()}catch(e){event.returnValue=false;showError(e);logException(e)}" req="1"></td></tr><tr><td>甲供材料款</td><td><input type="text" class="num" readOnly ro="0" name="ItemAmount" value="0.00" returnValue="0.00" min="-99999999999" max="99999999999" grp="true" acc="2" dt="" onreturnvaluechange="try{HTFKPlan_Schedule_Edit.CalScheduleAmount()}catch(e){event.returnValue=false;showError(e);logException(e)}"></td><td>其它扣款</td><td><input type="text" class="num" readOnly name="OtherDeduct" value="0.00" returnValue="0.00" min="-99999999999" max="99999999999" grp="true" acc="2" dt=""></td><td>上报金额(￥)</td><td><input type="text" class="num" readOnly name="ApplyAmount" value="103,000.00" returnValue="103000.00" min="-99999999999999" max="99999999999999" grp="true" acc="2" dt=""></td></tr><tr><td>预算人</td><td><input type="text" class="txt" readOnly ro="0" name="Budgeteer" value="" maxlength="20"></td><td>预算书编号</td><td><input type="text" class="txt" readOnly ro="0" name="BudgetDocNo" value="" maxlength="20"></td><td>应付进度款单号</td><td><input type="text" class="txt" readOnly ro="0" name="ApproveDocNo" value="" maxlength="40"></td></tr><tr><td style="vertical-align:top;">合同履行情况</td><td colspan="5"><textarea readOnly ro="0" name="PerformRemarks" rows="5" maxlength="">已完成补充协议二的2.1.2付款条件：目标成本、合约规划上线、供应商评价、合约规划重新归集、采购计划审批</textarea></td></tr><tr><td style="vertical-align:top;">合同相关条款</td><td colspan="5"><textarea readOnly ro="0" name="RefHtTerms" rows="5" maxlength="">补充协议2.1.2</textarea></td></tr><tr height="10"><td></td></tr></table><table width="100%" cellspacing="0" cellpadding="3" style="table-layout:fixed;" id="Section3"><col width="80"><col><col width="100" style="padding-left:20px;"><col><col width="100" style="padding-left:20px;"><col><tr><td colspan="6" class="sec bar">审定信息</td></tr><tr height="5"><td></td></tr><tr><td>审定日期</td><td><table  id="_ApproveDate_Table" name="_ApproveDate_Table"  cellpadding="0" cellspacing="0" width="100%" style="TABLE-LAYOUT:fixed"><col><col width="40"><tr><td><input type="text" mapType="dtm" class="dtm" time="0" maxlength="10"  readOnly name="ApproveDate" value="2024-02-26" returnValue="2024-02-26 15:19:45"></td><td style="PADDING-LEFT:4px"><img class="dtm" src="/_imgs/btn_off_cal.gif"></td></tr></table></td><td>审定金额</td><td><input type="text" class="num" readOnly name="ApproveAmount" value="103,000.00" returnValue="103000.00" min="-99999999999" max="99999999999" grp="true" acc="2" dt="" onreturnvaluechange="try{HTFKPlan_Schedule_Edit.CalScheduleAmount()}catch(e){event.returnValue=false;showError(e);logException(e)}"></td><td>审定人</td><td><input type="text" class="txt" readOnly name="ApprovedBy" value="叶嘉丽" maxlength="20"></td></tr><tr height="10"><td></td></tr></table></div></td></tr></form><form name="appForm_FormSubmit" method="post"><input type="hidden" name="mode" value="2"><input type="hidden" name="title" value="查看应付进度款"><input type="hidden" name="ContractGUID" value="2185773f-4cc9-ed11-80c4-b1fe5a19d94c"><input type="hidden" name="oid" value="5919eb4a-68d1-ee11-80c4-b1fe5a19d94c"><input type="hidden" name="mapFormSubmitXml"><input type="hidden" name="mapFormSubmitMode"><input type="hidden" name="mapFormSubmitId" value="5919eb4a-68d1-ee11-80c4-b1fe5a19d94c"><input type="hidden" name="mapFormSubmitParam" value=""></form></table><script type="text/javascript" language="javascript">var __rForm=["__jsSettings","Settings.aspx","__jsGlobal","Global.js","__jsUtil","Util.js","__jsNumber","number.js","__jsDate","date.js","__htcForm","表单控件HTC","__htcText","文本框控件HTC","__htcTextarea","文本区控件","__htcNumber","数字控件HTC","__htcDateInput","日期控件HTC","__htcDateImg","日期控件HTC"];if(typeof window.__resourceListForm=="undefined")window.__resourceListForm=__rForm;else window.__resourceListForm=window.__resourceListForm.concat(__rForm);</script>
+
+					</div>
+				</td>
+			</tr>
+		</table>
+	</body>
+</HTML>
+<script language="javascript">
+var iLeft = (document.body.clientWidth-200)/2;
+var iTop = (document.body.clientHeight-47)/2;
+document.writeln("<div id='__divRuning' style='POSITION: absolute; Z-INDEX: 108; Left:"+iLeft.toString()+"px; top:"+iTop.toString() + "px; width:223px; height:47px; BACKGROUND-COLOR: white; border:#9E9E9B 1px solid; font:bold 14px; color:#FF5A00; text-align:center; padding-top:16px; DISPLAY:none;'>处理中，请稍候...</div>");
+document.writeln("<input id='___MYSESSIONSTATE' value='0e6439b6-e733-f111-80c5-c7fdeab6be74' style='display:none;'>");
+document.writeln("<input type=\"hidden\" id=\"__mode\" name=\"__mode\" value=\"2\">");
+document.writeln("<input type=\"hidden\" id=\"__title\" name=\"__title\" value=\"查看应付进度款\">");
+document.writeln("<input type=\"hidden\" id=\"__ContractGUID\" name=\"__ContractGUID\" value=\"2185773f-4cc9-ed11-80c4-b1fe5a19d94c\">");
+document.writeln("<input type=\"hidden\" id=\"__oid\" name=\"__oid\" value=\"5919eb4a-68d1-ee11-80c4-b1fe5a19d94c\">");
+var __pageLoaded = true;
+</script>

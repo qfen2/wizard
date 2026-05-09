@@ -1,4 +1,4 @@
-from image_graph_tool import LangGraphImageTool
+from image_graph_tool_v1 import LangGraphImageTool
 # 让 LangGraph 自动规划一组商品图
 tool = LangGraphImageTool()
 

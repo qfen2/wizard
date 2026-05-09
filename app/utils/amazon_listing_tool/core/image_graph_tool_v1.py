@@ -168,7 +168,7 @@ class OpenAIImageClient:
                 image=img,
                 prompt=prompt,
                 size=size,
-                quality=quality,
+                quality=quality,   # type: ignore
             )
 
         saved_path = self._save_b64(
@@ -335,24 +335,24 @@ class LangGraphImageTool:
         }
 
         return f"""
-你是专业跨境电商视觉设计师。
-
-请生成一张高质量商品图片。
-
-产品：{product_name}
-平台：{platform}
-图片类型：{image_type}
-图片目标：{type_map.get(image_type, "高质量商业商品图")}
-场景：{scene}
-
-要求：
-- 商品必须是画面主体
-- 构图干净，重点明确
-- 真实商业摄影质感
-- 光线自然，材质清晰
-- 背景服务于商品表达
-- 不要无关文字、水印、二维码、logo
-- 可用于商品页、详情页、广告图或社交媒体推广
+        你是专业跨境电商视觉设计师。
+        
+        请生成一张高质量商品图片。
+        
+        产品：{product_name}
+        平台：{platform}
+        图片类型：{image_type}
+        图片目标：{type_map.get(image_type, "高质量商业商品图")}
+        场景：{scene}
+        
+        要求：
+        - 商品必须是画面主体
+        - 构图干净，重点明确
+        - 真实商业摄影质感
+        - 光线自然，材质清晰
+        - 背景服务于商品表达
+        - 不要无关文字、水印、二维码、logo
+        - 可用于商品页、详情页、广告图或社交媒体推广
         """.strip()
 
     # -------------------------
@@ -367,32 +367,32 @@ class LangGraphImageTool:
         has_image = bool(state.get("image_path"))
 
         prompt = f"""
-请判断用户的图片需求意图。
-
-可选 intent：
-- generate：纯文生图
-- edit：用户提供了图片，并要求改图、优化、重绘、风格化、换场景等
-- analyze：用户主要想分析图片
-- product_pack：用户想为一个商品生成一组图片，例如主图、详情图、广告图、社媒图
-- variants：用户想生成多个风格变体
-- unknown：无法判断
-
-用户是否提供图片：{has_image}
-用户需求：
-{user_request}
-
-只返回一个 intent 字符串。
+        请判断用户的图片需求意图。
+        
+        可选 intent：
+        - generate：纯文生图
+        - edit：用户提供了图片，并要求改图、优化、重绘、风格化、换场景等
+        - analyze：用户主要想分析图片
+        - product_pack：用户想为一个商品生成一组图片，例如主图、详情图、广告图、社媒图
+        - variants：用户想生成多个风格变体
+        - unknown：无法判断
+        
+        用户是否提供图片：{has_image}
+        用户需求：
+        {user_request}
+        
+        只返回一个 intent 字符串。
         """.strip()
 
         result = self.llm.invoke(prompt).content.strip().lower()
         result = re.sub(r"[^a-z_]", "", result)
 
-        allowed = {"generate", "edit", "analyze", "product_pack", "variants", "unknown"}
+        allowed = {"generFate", "edit", "analyze", "product_pack", "variants", "unknown"}
         intent = result if result in allowed else "unknown"
 
         return {
             **state,
-            "intent": intent,
+            "intent": intent,   # type: ignore
         }
 
     def _plan_node(self, state: ImageWorkflowState) -> ImageWorkflowState:
@@ -404,22 +404,22 @@ class LangGraphImageTool:
         intent = state.get("intent", "unknown")
 
         planning_prompt = f"""
-你是一个电商 AI 图片生产任务规划器。
-
-请根据用户需求规划图片任务。
-
-规则：
-1. 如果用户要求生成一组商品图，规划 main、lifestyle、detail、ad/social 等任务
-2. 如果用户提供了 image_path，并要求改造图片，任务 mode 应该是 edit
-3. 如果用户只是要求分析图片，任务 mode 应该是 analyze
-4. 如果用户要求多个版本，规划多个 generate 或 edit 任务
-5. 每个任务的 prompt 必须完整、具体、可直接用于图片生成或编辑
-6. 不要要求模型生成品牌 logo、二维码、水印或大量文字
-
-已识别 intent：{intent}
-是否有原图：{bool(image_path)}
-用户需求：
-{user_request}
+        你是一个电商 AI 图片生产任务规划器。
+        
+        请根据用户需求规划图片任务。
+        
+        规则：
+        1. 如果用户要求生成一组商品图，规划 main、lifestyle、detail、ad/social 等任务
+        2. 如果用户提供了 image_path，并要求改造图片，任务 mode 应该是 edit
+        3. 如果用户只是要求分析图片，任务 mode 应该是 analyze
+        4. 如果用户要求多个版本，规划多个 generate 或 edit 任务
+        5. 每个任务的 prompt 必须完整、具体、可直接用于图片生成或编辑
+        6. 不要要求模型生成品牌 logo、二维码、水印或大量文字
+        
+        已识别 intent：{intent}
+        是否有原图：{bool(image_path)}
+        用户需求：
+        {user_request}
         """.strip()
 
         try:
@@ -434,7 +434,7 @@ class LangGraphImageTool:
 
             return {
                 **state,
-                "intent": planned.intent or intent,
+                "intent": planned.intent or intent,  # type: ignore
                 "product_name": planned.product_name,
                 "platform": planned.platform,
                 "tasks": tasks,
@@ -458,17 +458,17 @@ class LangGraphImageTool:
             raw_prompt = task.get("prompt", "")
 
             optimize_prompt = f"""
-请将下面的图片生成/编辑提示词优化为更专业的商业图片 prompt。
-
-要求：
-- 保留用户核心意图
-- 强化主体、构图、光线、色彩、质感、场景
-- 适合电商商品图、广告图或社媒素材
-- 避免水印、二维码、乱码文字、无关 logo
-- 直接输出优化后的 prompt，不要解释
-
-原始 prompt：
-{raw_prompt}
+            请将下面的图片生成/编辑提示词优化为更专业的商业图片 prompt。
+            
+            要求：
+            - 保留用户核心意图
+            - 强化主体、构图、光线、色彩、质感、场景
+            - 适合电商商品图、广告图或社媒素材
+            - 避免水印、二维码、乱码文字、无关 logo
+            - 直接输出优化后的 prompt，不要解释
+            
+            原始 prompt：
+            {raw_prompt}
             """.strip()
 
             try:
@@ -578,7 +578,7 @@ class LangGraphImageTool:
 
         return {
             **state,
-            "summary": summary,
+            "summary": summary,  # type: ignore
         }
 
     def _route_after_intent(self, state: ImageWorkflowState) -> str:
@@ -594,13 +594,13 @@ class LangGraphImageTool:
         """
         构建 LangGraph 工作流。
         """
-        graph = StateGraph(ImageWorkflowState)
+        graph = StateGraph(ImageWorkflowState)  # type: ignore
 
-        graph.add_node("detect_intent", self._detect_intent_node)
-        graph.add_node("plan", self._plan_node)
-        graph.add_node("optimize_prompt", self._optimize_prompt_node)
-        graph.add_node("execute", self._execute_node)
-        graph.add_node("summarize", self._summarize_node)
+        graph.add_node("detect_intent", self._detect_intent_node)  # type: ignore
+        graph.add_node("plan", self._plan_node)  # type: ignore
+        graph.add_node("optimize_prompt", self._optimize_prompt_node)  # type: ignore
+        graph.add_node("execute", self._execute_node)  # type: ignore
+        graph.add_node("summarize", self._summarize_node)  # type: ignore
 
         graph.add_edge(START, "detect_intent")
         graph.add_conditional_edges(

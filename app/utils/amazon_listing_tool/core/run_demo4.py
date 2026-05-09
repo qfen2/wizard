@@ -1,4 +1,4 @@
-from image_graph_tool import LangGraphImageTool
+from image_graph_tool_v1 import LangGraphImageTool
 # 基于已有商品图做多需求改造
 tool = LangGraphImageTool()
 

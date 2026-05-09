@@ -1,4 +1,4 @@
-from image_graph_tool import LangGraphImageTool
+from image_graph_tool_v1 import LangGraphImageTool
 # 直接文生图
 tool = LangGraphImageTool()
 
